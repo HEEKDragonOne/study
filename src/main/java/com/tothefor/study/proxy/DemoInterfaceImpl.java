@@ -9,7 +9,7 @@ public class DemoInterfaceImpl implements DemoInterface {
     @Override
     public int add(int a, int b) {
         System.out.println("开始计算");
-//        int i = 1/0;
+        int i = 1/0;
         return a + b;
     }
 
