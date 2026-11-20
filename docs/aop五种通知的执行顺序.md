@@ -247,3 +247,62 @@ after
 
 java.lang.ArithmeticException: / by zero
 ```
+
+## 扩展
+
+### JoinPoint
+
+`@Around`方法中添加了一个`ProceedingJoinPoint`类型的参数。除此之外，其他的注解方法中也可以加一个`JoinPoint`
+类型的参数，但必须放到第一个位置，可以通过它获取方法的参数。如下所示：
+
+```java
+
+@Before("points()")
+public void before(JoinPoint joinPoint) {
+    System.out.println("before：" + Arrays.toString(joinPoint.getArgs()));
+}
+
+@After("points()")
+public void after(JoinPoint joinPoint) {
+    System.out.println("after" + Arrays.toString(joinPoint.getArgs()));
+}
+
+@AfterThrowing(value = "points()")
+public void afterThrowing(JoinPoint joinPoint) {
+    System.out.println("afterThrowing：" + Arrays.toString(joinPoint.getArgs()));
+}
+
+@AfterReturning(value = "points()")
+public void afterReturning(JoinPoint joinPoint) {
+    System.out.println("afterReturning：" + Arrays.toString(joinPoint.getArgs()));
+}
+```
+
+### AfterReturning
+
+可以在`@AfterReturning`对应的方法内拿到方法最后返回的结果。如下所示：
+
+```java
+
+@AfterReturning(value = "points()", returning = "res")
+public void afterReturning(Object res) {
+    System.out.println("afterReturning：" + res);
+}
+```
+
+- 注解里面的参数名称必须和方法里的参数名称保持一致！！！
+
+### AfterThrowing
+
+可以指定抛出异常的类型，如果与指定的异常不匹配，则不会触发对应的AOP方法。如下所示：
+
+```java
+
+@AfterThrowing(value = "points()", throwing = "ex")
+public void afterThrowing(NullPointerException ex) {
+    System.out.println("afterThrowing：" + ex.getMessage());
+}
+```
+
+- 指定了异常类型为`NullPointerException`，所以，在上面的示例中，如果抛出的依旧是`java.lang.ArithmeticException: / by
+  zero`，那么该方法是不会执行的。

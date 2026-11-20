@@ -15,7 +15,7 @@ class StudyApplicationTests {
     @Test
     void contextLoads() {
 
-        demoInterface.add(1,2);
+        System.out.println(demoInterface.add(1, 2));
 
     }
 

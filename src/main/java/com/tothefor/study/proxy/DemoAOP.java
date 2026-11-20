@@ -1,10 +1,13 @@
 package com.tothefor.study.proxy;
 
 
+import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.*;
 import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Component;
+
+import java.util.Arrays;
 
 @Component
 @Aspect
@@ -18,23 +21,23 @@ public class DemoAOP {
 
 
     @Before("points()")
-    public void before() {
-        System.out.println("before");
+    public void before(JoinPoint joinPoint) {
+        System.out.println("before：" + Arrays.toString(joinPoint.getArgs()));
     }
 
     @After("points()")
-    public void after() {
-        System.out.println("after");
+    public void after(JoinPoint joinPoint) {
+        System.out.println("after" + Arrays.toString(joinPoint.getArgs()));
     }
 
-    @AfterThrowing("points()")
-    public void afterThrowing() {
-        System.out.println("afterThrowing");
+    @AfterThrowing(value = "points()")
+    public void afterThrowing(JoinPoint joinPoint) {
+        System.out.println("afterThrowing：" + Arrays.toString(joinPoint.getArgs()));
     }
 
-    @AfterReturning("points()")
-    public void afterReturning() {
-        System.out.println("afterReturning");
+    @AfterReturning(value = "points()")
+    public void afterReturning(JoinPoint joinPoint) {
+        System.out.println("afterReturning：" + Arrays.toString(joinPoint.getArgs()));
     }
 
     @Around("points()")
