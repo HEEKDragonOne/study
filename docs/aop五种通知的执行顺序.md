@@ -253,7 +253,7 @@ java.lang.ArithmeticException: / by zero
 ### JoinPoint
 
 `@Around`方法中添加了一个`ProceedingJoinPoint`类型的参数。除此之外，其他的注解方法中也可以加一个`JoinPoint`
-类型的参数，但必须放到第一个位置，可以通过它获取方法的参数。如下所示：
+类型的参数，但`必须放到第一个位置`，可以通过它获取方法的参数。如下所示：
 
 ```java
 
