@@ -3,7 +3,6 @@
 **Bean的生命周期**：`实例化` → `属性注入` → `初始化` → `使用` → `销毁` 。
 ![Bean的生命周期](./beansmzq.png)
 
-
 ## 实例化
 
 ### Bean的解析与注册
@@ -200,13 +199,26 @@ BeanFactoryPostProcessor的 destroyMethod方法执行
 
 可以看到，原本通过Bean的配置类指定的init和destroy方法是没有输出的。
 
-### Bean实例化
+#### Bean实例化
+
+> AbstractAutowireCapableBeanFactory#createBean → doCreateBean → createBeanInstance
 
 ## 属性填充
+
+> AbstractAutowireCapableBeanFactory#populateBean
+
+实例化完成后，容器进入属性填充阶段，也就是我们常说的依赖注入（DI）。就是 populateBean。它的职责是：遍历 BeanDefinition 中的
+propertyValues，或依据自动装配规则，把该 Bean
+依赖的其他 Bean 注入到对应字段或 setter 方法中。
+
+- 解析Bean中所有标注了@Autowired、@Value、@Resource等注解的属性/setter方法；
+- 从容器中查找匹配的依赖Bean，若依赖Bean未创建，会先触发依赖Bean的完整生命周期（递归）
 
 ## 初始化
 
 ### 源码
+
+抽象类AbstractAutowireCapableBeanFactory中的initializeBean源码：
 
 ```java
 protected Object initializeBean(String beanName, Object bean, @Nullable RootBeanDefinition mbd) {
@@ -244,7 +256,6 @@ protected Object initializeBean(String beanName, Object bean, @Nullable RootBean
     return wrappedBean;
 }
 ```
-
 
 ### Aware接口回调
 
