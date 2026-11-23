@@ -203,6 +203,108 @@ BeanFactoryPostProcessor的 destroyMethod方法执行
 
 ## Aware接口回调
 
+Aware接口是Spring提供的容器资源注入通道，让Bean能够感知到自身在容器中的信息，以及获取容器的底层核心组件。属性填充完成后，容器会检查当前Bean是否实现了Aware系列接口，若实现了，会按固定顺序回调对应的接口方法，将Spring容器的底层组件注入到Bean中。
+
+Aware接口以及执行的先后顺序：
+
+- `BeanNameAware`：注入当前Bean在容器中的名称；
+- `BeanClassLoaderAware`：注入加载当前Bean的ClassLoader；
+- `BeanFactoryAware`：注入当前的BeanFactory实例；
+- `EnvironmentAware`：注入Environment环境配置对象；
+- `EmbeddedValueResolverAware`：注入占位符解析器，用于解析`${}`配置 ；
+- `ResourceLoaderAware`：注入资源加载器（仅ApplicationContext环境生效） ；
+- `ApplicationEventPublisherAware`：注入事件发布器 ；
+- `MessageSourceAware`：注入国际化消息源；
+- `ApplicationContextAware`：注入ApplicationContext应用上下文对象；
+
+示例：
+
+```java
+package com.tothefor.study.beans;
+
+
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanClassLoaderAware;
+import org.springframework.beans.factory.BeanFactory;
+import org.springframework.beans.factory.BeanFactoryAware;
+import org.springframework.beans.factory.BeanNameAware;
+import org.springframework.context.*;
+import org.springframework.core.env.Environment;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.stereotype.Component;
+import org.springframework.util.StringValueResolver;
+
+@Component
+public class AwareDemo implements BeanNameAware, BeanClassLoaderAware, BeanFactoryAware, EnvironmentAware, EmbeddedValueResolverAware, ResourceLoaderAware, ApplicationEventPublisherAware, MessageSourceAware, ApplicationContextAware {
+
+    @Override
+    public void setBeanName(String name) {
+        System.out.println("BeanNameAware 执行 " + name);
+    }
+
+    @Override
+    public void setBeanClassLoader(ClassLoader classLoader) {
+        System.out.println("BeanClassLoaderAware 执行 ");
+    }
+
+    @Override
+    public void setBeanFactory(BeanFactory beanFactory) throws BeansException {
+        System.out.println("BeanFactoryAware 执行 ");
+
+    }
+
+    @Override
+    public void setEnvironment(Environment environment) {
+        System.out.println("EnvironmentAware 执行 ");
+    }
+
+    @Override
+    public void setEmbeddedValueResolver(StringValueResolver resolver) {
+        System.out.println("EmbeddedValueResolverAware 执行 ");
+
+    }
+
+    @Override
+    public void setResourceLoader(ResourceLoader resourceLoader) {
+        System.out.println("ResourceLoaderAware 执行 ");
+
+    }
+
+    @Override
+    public void setApplicationEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
+        System.out.println("ApplicationEventPublisherAware 执行 ");
+
+    }
+
+    @Override
+    public void setMessageSource(MessageSource messageSource) {
+        System.out.println("MessageSourceAware 执行 ");
+    }
+
+    @Override
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        System.out.println("ApplicationContextAware 执行 ");
+
+    }
+
+}
+
+```
+
+输出：
+
+```bash
+BeanNameAware 执行 awareDemo
+BeanClassLoaderAware 执行 
+BeanFactoryAware 执行 
+EnvironmentAware 执行 
+EmbeddedValueResolverAware 执行 
+ResourceLoaderAware 执行 
+ApplicationEventPublisherAware 执行 
+MessageSourceAware 执行 
+ApplicationContextAware 执行
+```
+
 ## BeanPostProcessor
 
 BeanPostProcessor 是 Spring 中最重要的扩展接口之一，它提供两个方法：`postProcessBeforeInitialization`和
