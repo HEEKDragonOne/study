@@ -329,7 +329,6 @@ public class ControllerLogPostProcessor implements BeanPostProcessor {
  【日志增强】为Controller[demo]创建CGLIB代理对象
 ```
 
-
 访问访问对应接口后，日志如下：
 
 ```bash
