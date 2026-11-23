@@ -19,9 +19,17 @@ public class User implements InitializingBean, DisposableBean {
         System.out.println("配置Bean initMethod方法执行");
     }
 
+    public void initImpl() {
+        System.out.println("BeanFactoryPostProcessor的 initMethod方法执行");
+    }
+
     // 销毁方法，对应destroyMethod
     public void destroyMethod() {
         System.out.println("配置Bean destroyMethod方法执行");
+    }
+
+    public void destroyMethodImpl() {
+        System.out.println("BeanFactoryPostProcessor的 destroyMethod方法执行");
     }
 
     @PostConstruct
