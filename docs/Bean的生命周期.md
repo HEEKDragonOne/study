@@ -197,6 +197,147 @@ BeanFactoryPostProcessor的 destroyMethod方法执行
 
 可以看到，原本通过Bean的配置类指定的init和destroy方法是没有输出的。
 
+## Bean实例化
+
+## 属性填充
+
+## Aware接口回调
+
+## BeanPostProcessor
+
+BeanPostProcessor 是 Spring 中最重要的扩展接口之一，它提供两个方法：`postProcessBeforeInitialization`和
+`postProcessAfterInitialization`。
+
+- BPP前置：
+  Aware接口回调完成后，容器会执行所有BeanPostProcessor实现类的postProcessBeforeInitialization方法，也就是初始化前置处理，在Bean初始化之前执行，允许开发者对Bean实例进行修改、包装、替换。
+
+- BPP后置：
+  初始化操作完成后，容器会执行所有BeanPostProcessor实现类的postProcessAfterInitialization方法，也就是初始化后置处理，在Bean初始化完成后，对Bean进行最终的修改、包装、替换，Spring
+  AOP的动态代理对象，就是在这个阶段生成的。
+
+> 如果Bean被AOP切面拦截，在后置处理阶段，会返回一个动态代理对象替换原始的目标对象，最终存入单例池的是代理对象，而非原始对象，这也是AOP能够实现功能增强的底层原理。
+
+实现：
+
+```java
+package com.tothefor.study.beans;
+
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.springframework.stereotype.Component;
+
+
+@Component
+public class BeanPostProcessorImpl implements BeanPostProcessor {
+
+    @Override
+    public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+        System.out.println("BeanPostProcessor before执行 beanName=" + beanName);
+        return bean;
+    }
+
+    @Override
+    public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+        System.out.println("BeanPostProcessor after执行 beanName=" + beanName);
+        return bean;
+    }
+}
+
+```
+
+输出结果会非常多，这里只粘贴了相关的输出：
+
+```bash
+【BeanFactoryPostProcessor】执行开始，容器中已注册的BeanDefinition数量：136
+【BeanFactoryPostProcessor】执行结束
+User无参构造执行...
+BeanPostProcessor before执行 beanName=user
+注解方式 initMethod方法执行
+接口方式 initMethod方法执行
+BeanFactoryPostProcessor的 initMethod方法执行
+BeanPostProcessor after执行 beanName=user
+注解方式 destroyMethod方法执行
+接口方式 destroyMethod方法执行
+BeanFactoryPostProcessor的 destroyMethod方法执行
+```
+
+### 示例
+
+基于BeanPostProcessor实现全局接口日志切面，替代传统AOP，实现所有Controller接口的入参、出参、响应时间全量日志打印，性能更优，扩展更灵活。
+
+```java
+package com.tothefor.study.beans;
+
+
+import com.alibaba.fastjson2.JSON;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.config.BeanPostProcessor;
+import org.springframework.cglib.proxy.Enhancer;
+import org.springframework.cglib.proxy.MethodInterceptor;
+import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.RestController;
+
+@Slf4j
+@Component
+public class ControllerLogPostProcessor implements BeanPostProcessor {
+    @Override
+    public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+        // 仅处理标注了@RestController的Bean
+        if (bean.getClass().isAnnotationPresent(RestController.class)) {
+            log.info("【日志增强】为Controller[{}]创建CGLIB代理对象", beanName);
+            // CGLIB 通过继承目标类生成代理子类，代理类保留 @RestController / @GetMapping 注解
+            Enhancer enhancer = new Enhancer();
+            enhancer.setSuperclass(bean.getClass());
+            enhancer.setCallback((MethodInterceptor) (obj, method, args, proxy) -> {
+                // Object 的 toString/equals/hashCode 等方法不做增强，避免干扰
+                if (method.getDeclaringClass() == Object.class) {
+                    return proxy.invokeSuper(obj, args);
+                }
+                long startTime = System.currentTimeMillis();
+                String className = bean.getClass().getSimpleName();
+                String methodName = method.getName();
+                // 打印入参
+                log.info("【接口请求】{}.{} 入参：{}", className, methodName, JSON.toJSONString(args));
+                Object result;
+                try {
+                    // 调用父类（即原始 Controller）的真实方法
+                    result = proxy.invokeSuper(obj, args);
+                    // 打印出参
+                    log.info("【接口响应】{}.{} 出参：{}", className, methodName, JSON.toJSONString(result));
+                } catch (Throwable e) {
+                    log.error("【接口异常】{}.{} 执行异常", className, methodName, e);
+                    throw e;
+                } finally {
+                    // 打印响应时间
+                    long endTime = System.currentTimeMillis();
+                    log.info("【接口耗时】{}.{} 执行耗时：{}ms", className, methodName, (endTime - startTime));
+                }
+                return result;
+            });
+            return enhancer.create();
+        }
+        return bean;
+    }
+}
+
+```
+
+在启动服务后，控制台上会先打印日志：
+
+```bash
+ 【日志增强】为Controller[demo]创建CGLIB代理对象
+```
+
+访问访问对应接口后，日志如下：
+
+```bash
+2026-11-23 11:06:35.419  INFO 37604 --- [nio-8080-exec-1] c.t.s.beans.ControllerLogPostProcessor   : 【接口请求】Demo.test 入参：[]
+测试接口
+2026-11-23 11:06:35.424  INFO 37604 --- [nio-8080-exec-1] c.t.s.beans.ControllerLogPostProcessor   : 【接口响应】Demo.test 出参：null
+2026-11-23 11:06:35.424  INFO 37604 --- [nio-8080-exec-1] c.t.s.beans.ControllerLogPostProcessor   : 【接口耗时】Demo.test 执行耗时：72ms
+```
+
 ## Bean的初始化和销毁
 
 - 初始化阶段执行顺序：构造方法 > @PostConstruct注解方法 > InitializingBean接口的afterPropertiesSet方法 >
