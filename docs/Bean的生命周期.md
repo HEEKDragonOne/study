@@ -3,7 +3,10 @@
 **Bean的生命周期**：`实例化` → `属性注入` → `初始化` → `使用` → `销毁` 。
 ![Bean的生命周期](./beansmzq.png)
 
-## Bean的解析与注册
+
+## 实例化
+
+### Bean的解析与注册
 
 容器启动的第一步，不是直接创建Bean，而是解析并注册Bean的元数据定义。`BeanDefinition`
 是Bean的元数据载体，相当于Bean的“出生证明”，包含了Bean的全量信息：全类名、作用域、是否懒加载、依赖关系、初始化方法、销毁方法等。Spring容器完全基于这个元数据来创建Bean实例。
@@ -14,7 +17,7 @@
 - 将所有BeanDefinition注册到BeanDefinitionRegistry（Bean定义注册中心）；
 - 执行所有BeanFactoryPostProcessor实现类，允许开发者在Bean实例化之前，修改、新增、删除BeanDefinition
 
-### 自定义BeanFactoryPostProcessor实现类
+#### 自定义BeanFactoryPostProcessor实现类
 
 通过实现BeanFactoryPostProcessor来控制Bean的示例。
 指定Bean：
@@ -92,7 +95,7 @@ BeanFactoryPostProcessor的 initMethod方法执行
 BeanFactoryPostProcessor的 destroyMethod方法执行
 ```
 
-### 补充
+#### 补充
 
 如果在BeanFactoryPostProcessor的实现类中指定了Bean的init和destroy方法，那么原本Bean的init和destroy方法就会被覆盖。
 
@@ -197,11 +200,53 @@ BeanFactoryPostProcessor的 destroyMethod方法执行
 
 可以看到，原本通过Bean的配置类指定的init和destroy方法是没有输出的。
 
-## Bean实例化
+### Bean实例化
 
 ## 属性填充
 
-## Aware接口回调
+## 初始化
+
+### 源码
+
+```java
+protected Object initializeBean(String beanName, Object bean, @Nullable RootBeanDefinition mbd) {
+
+    // 1. 调用 Aware 接口
+    if (System.getSecurityManager() != null) {
+        AccessController.doPrivileged((PrivilegedAction<Object>) () -> {
+            invokeAwareMethods(beanName, bean);
+            return null;
+        }, getAccessControlContext());
+    } else {
+        invokeAwareMethods(beanName, bean);
+    }
+
+    // 2. 初始化前的 BeanPostProcessor
+    Object wrappedBean = bean;
+    if (mbd == null || !mbd.isSynthetic()) {
+        wrappedBean = applyBeanPostProcessorsBeforeInitialization(wrappedBean, beanName);
+    }
+
+    // 3. 调用初始化方法
+    try {
+        invokeInitMethods(beanName, wrappedBean, mbd);
+    } catch (Throwable ex) {
+        throw new BeanCreationException(
+                (mbd != null ? mbd.getResourceDescription() : null),
+                beanName, "Invocation of init method failed", ex);
+    }
+
+    // 4. 初始化后的 BeanPostProcessor
+    if (mbd == null || !mbd.isSynthetic()) {
+        wrappedBean = applyBeanPostProcessorsAfterInitialization(wrappedBean, beanName);
+    }
+
+    return wrappedBean;
+}
+```
+
+
+### Aware接口回调
 
 Aware接口是Spring提供的容器资源注入通道，让Bean能够感知到自身在容器中的信息，以及获取容器的底层核心组件。属性填充完成后，容器会检查当前Bean是否实现了Aware系列接口，若实现了，会按固定顺序回调对应的接口方法，将Spring容器的底层组件注入到Bean中。
 
@@ -305,7 +350,7 @@ MessageSourceAware 执行
 ApplicationContextAware 执行
 ```
 
-## BeanPostProcessor
+### BeanPostProcessor
 
 BeanPostProcessor 是 Spring 中最重要的扩展接口之一，它提供两个方法：`postProcessBeforeInitialization`和
 `postProcessAfterInitialization`。
@@ -363,7 +408,7 @@ BeanPostProcessor after执行 beanName=user
 BeanFactoryPostProcessor的 destroyMethod方法执行
 ```
 
-### 示例
+#### 示例
 
 基于BeanPostProcessor实现全局接口日志切面，替代传统AOP，实现所有Controller接口的入参、出参、响应时间全量日志打印，性能更优，扩展更灵活。
 
@@ -440,7 +485,7 @@ public class ControllerLogPostProcessor implements BeanPostProcessor {
 2026-11-23 11:06:35.424  INFO 37604 --- [nio-8080-exec-1] c.t.s.beans.ControllerLogPostProcessor   : 【接口耗时】Demo.test 执行耗时：72ms
 ```
 
-## Bean的初始化和销毁
+### Bean的初始化和销毁
 
 - 初始化阶段执行顺序：构造方法 > @PostConstruct注解方法 > InitializingBean接口的afterPropertiesSet方法 >
   @Bean的initMethod方法（BeanFactoryPostProcessor中指定的inti方法）。
@@ -448,7 +493,7 @@ public class ControllerLogPostProcessor implements BeanPostProcessor {
 - 销毁阶段执行顺序：@PreDestroy注解方法 > DisposableBean接口的destroy方法 >
   @Bean的destroyMethod方法（BeanFactoryPostProcessor中指定的destroy方法）。
 
-### 方式一：手动配置@Bean
+#### 方式一：手动配置@Bean
 
 通过手动使用`@Bean`的方式进行配置初始化和销毁。
 
@@ -510,7 +555,7 @@ User无参构造执行...
 配置Bean destroyMethod方法执行
 ```
 
-### 方式二：注解方式
+#### 方式二：注解方式
 
 通过使用注解`@PostConstruct`和`@PreDestroy`实现初始化和销毁。
 
@@ -565,7 +610,7 @@ User无参构造执行...
 配置Bean destroyMethod方法执行
 ```
 
-### 方式三：实现接口
+#### 方式三：实现接口
 
 通过实现`InitializingBean`接口的`afterPropertiesSet`方法和`DisposableBean`接口的`destroy`方法实现初始化和销毁。
 
