@@ -3,12 +3,12 @@
 **Bean的生命周期**：`实例化` → `属性注入` → `初始化` → `使用` → `销毁` 。
 ![Bean的生命周期](./beansmzq.png)
 
-初始化阶段执行顺序：构造方法 > @PostConstruct注解方法 > InitializingBean接口的afterPropertiesSet方法 >
+## Bean的初始化和销毁
+
+- 初始化阶段执行顺序：构造方法 > @PostConstruct注解方法 > InitializingBean接口的afterPropertiesSet方法 >
 @Bean的initMethod方法。
 
-销毁阶段执行顺序：@PreDestroy注解方法 > DisposableBean接口的destroy方法 > @Bean的destroyMethod方法。
-
-## Bean的初始化和销毁
+- 销毁阶段执行顺序：@PreDestroy注解方法 > DisposableBean接口的destroy方法 > @Bean的destroyMethod方法。
 
 ### 方式一：手动配置@Bean
 
