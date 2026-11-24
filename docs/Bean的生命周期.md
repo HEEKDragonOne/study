@@ -3,6 +3,81 @@
 **Bean的生命周期**：`实例化` → `属性注入` → `初始化` → `使用` → `销毁` 。
 ![Bean的生命周期](./beansmzq.png)
 
+### 源码
+
+在AutowireCapableBeanFactory接口中可以看见完整的Bean的生命周期，这里贴上核心接口：
+
+```java
+
+public interface AutowireCapableBeanFactory extends BeanFactory {
+
+    /**
+     * Fully create a new bean instance of the given class.
+     */
+    <T> T createBean(Class<T> beanClass) throws BeansException;
+
+    /**
+     * Populate the given bean instance through applying after-instantiation callbacks
+     */
+    void autowireBean(Object existingBean) throws BeansException;
+
+    /**
+     * 配置Bean，比如：调用Aware接口
+     */
+    Object configureBean(Object existingBean, String beanName) throws BeansException;
+
+
+    //-------------------------------------------------------------------------
+    // Specialized methods for fine-grained control over the bean lifecycle
+    //-------------------------------------------------------------------------
+
+    /**
+     * 创建实例化
+     */
+    Object createBean(Class<?> beanClass, int autowireMode, boolean dependencyCheck) throws BeansException;
+
+    /**
+     * 自动状态
+     */
+    Object autowire(Class<?> beanClass, int autowireMode, boolean dependencyCheck) throws BeansException;
+
+    /**
+     * 自动状态
+     */
+    void autowireBeanProperties(Object existingBean, int autowireMode, boolean dependencyCheck)
+            throws BeansException;
+
+    /**
+     * 属性填充
+     */
+    void applyBeanPropertyValues(Object existingBean, String beanName) throws BeansException;
+
+    /**
+     * 初始化
+     */
+    Object initializeBean(Object existingBean, String beanName) throws BeansException;
+
+    /**
+     * BPP前置
+     */
+    Object applyBeanPostProcessorsBeforeInitialization(Object existingBean, String beanName)
+            throws BeansException;
+
+    /**
+     * BPP后置
+     */
+    Object applyBeanPostProcessorsAfterInitialization(Object existingBean, String beanName)
+            throws BeansException;
+
+    /**
+     * 销毁
+     */
+    void destroyBean(Object existingBean);
+
+}
+
+```
+
 ## 实例化
 
 ### Bean的解析与注册
