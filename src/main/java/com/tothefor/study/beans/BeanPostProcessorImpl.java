@@ -1,4 +1,3 @@
-/*
 package com.tothefor.study.beans;
 
 import org.springframework.beans.BeansException;
@@ -21,4 +20,3 @@ public class BeanPostProcessorImpl implements BeanPostProcessor {
         return bean;
     }
 }
-*/
